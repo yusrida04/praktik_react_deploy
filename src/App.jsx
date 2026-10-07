@@ -35,16 +35,19 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [spreads, setSpreads] = useState([DEFAULT_SPREAD]);
 
-  // Sync Auth State
+  // 1. Panggil data Firestore secara otomatis saat user terautentikasi
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
-        // Ambil data dari Firestore milik pengguna yang sedang login
-        const docRef = doc(db, 'diaries', user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists() && docSnap.data().spreads) {
-          setSpreads(docSnap.data().spreads);
+        try {
+          const docRef = doc(db, 'diaries', user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists() && docSnap.data().spreads) {
+            setSpreads(docSnap.data().spreads);
+          }
+        } catch (err) {
+          console.error("Gagal mengambil data dari Firestore:", err);
         }
         setIsBookOpen(true);
       } else {
@@ -55,24 +58,32 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Simpan data ke Firestore setiap ada perubahan pada spreads
-  const saveToFirestore = async (newSpreads) => {
-    if (currentUser) {
-      await setDoc(doc(db, 'diaries', currentUser.uid), {
-        spreads: newSpreads
-      });
+  // Fungsi Pembantu untuk Menyimpan langsung ke Firestore
+  const saveToFirestore = async (newSpreads, user = currentUser) => {
+    if (user) {
+      try {
+        await setDoc(doc(db, 'diaries', user.uid), {
+          spreads: newSpreads
+        });
+      } catch (err) {
+        console.error("Gagal menyimpan data ke Firestore:", err);
+      }
     }
   };
 
+  // 2. Perbarui State & Langsung Simpan Perubahan Teks
   const updatePage = (side, field, value) => {
     setSpreads(prevSpreads => {
-      const updated = [...prevSpreads];
-      if (!updated[spreadIndex]) return prevSpreads;
-      
-      const newSpread = { ...updated[spreadIndex] };
-      newSpread[side] = { ...newSpread[side], [field]: value };
-      updated[spreadIndex] = newSpread;
-      
+      const updated = prevSpreads.map((spread, idx) => {
+        if (idx !== spreadIndex) return spread;
+        return {
+          ...spread,
+          [side]: {
+            ...spread[side],
+            [field]: value
+          }
+        };
+      });
       saveToFirestore(updated);
       return updated;
     });
@@ -85,13 +96,19 @@ export default function App() {
     setIsFlipping(true);
   };
 
+  // 3. PERBAIKAN UTAMA: Pastikan tombol Simpan & Kunci langsung mengirim data ke Firestore
   const handleSubmitPage = (side) => {
     setSpreads(prevSpreads => {
-      const updated = [...prevSpreads];
-      const newSpread = { ...updated[spreadIndex] };
-      newSpread[side] = { ...newSpread[side], isSubmitted: true };
-      updated[spreadIndex] = newSpread;
-
+      const updated = prevSpreads.map((spread, idx) => {
+        if (idx !== spreadIndex) return spread;
+        return {
+          ...spread,
+          [side]: {
+            ...spread[side],
+            isSubmitted: true
+          }
+        };
+      });
       saveToFirestore(updated);
       return updated;
     });
@@ -169,7 +186,6 @@ export default function App() {
                   </p>
                 </div>
 
-                {/* KUNCI EMAS BERGETAR JIKA GAGAL LOGIN */}
                 <motion.div 
                   animate={isLockShaking ? {
                     x: [2, 10, -8, 8, -5, 5, 2],
