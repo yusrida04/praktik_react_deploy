@@ -8,5 +8,5 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  base: '/praktik_react_deploy/',
+  base: '/',
 })
