@@ -7,11 +7,12 @@ import {
 } from 'firebase/auth';
 import { auth } from '../firebase';
 
-export default function AuthModal({ onClose }) {
+export default function AuthModal({ onClose, onErrorShake }) {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isShaking, setIsShaking] = useState(false);
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -25,8 +26,13 @@ export default function AuthModal({ onClose }) {
       }
       onClose();
     } catch (err) {
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        setError('Email atau kata sandi salah.');
+      // Pemicu animasi getar saat gagal masuk
+      setIsShaking(true);
+      if (onErrorShake) onErrorShake();
+      setTimeout(() => setIsShaking(false), 600);
+
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setError('Email atau kata sandi salah. Kunci tidak bisa dibuka!');
       } else if (err.code === 'auth/email-already-in-use') {
         setError('Email sudah terdaftar. Silakan login.');
       } else if (err.code === 'auth/weak-password') {
@@ -47,11 +53,15 @@ export default function AuthModal({ onClose }) {
         className="absolute inset-0 bg-black/75 backdrop-blur-sm"
       />
 
+      {/* Card Modal dengan Animasi Shake (Getar) jika Gagal */}
       <motion.div
         initial={{ scale: 0.85, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
+        animate={isShaking ? {
+          x: [0, -12, 12, -10, 10, -5, 5, 0],
+          rotate: [0, -2, 2, -1, 1, 0]
+        } : { scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.85, opacity: 0, y: 20 }}
-        transition={{ type: 'spring', duration: 0.5 }}
+        transition={isShaking ? { duration: 0.5, ease: 'easeInOut' } : { type: 'spring', duration: 0.5 }}
         className="relative w-full max-w-sm bg-gradient-to-b from-[#3a1d1d] via-[#2a1313] to-[#1e0a0a] border-2 border-amber-400/50 rounded-3xl p-6 sm:p-7 shadow-[0_0_50px_rgba(244,63,94,0.3)] text-rose-100 z-10"
       >
         <button
@@ -63,9 +73,14 @@ export default function AuthModal({ onClose }) {
         </button>
 
         <div className="flex flex-col items-center text-center mb-5">
-          <div className="p-3.5 bg-gradient-to-tr from-amber-500 to-amber-300 rounded-2xl shadow-lg text-amber-950 mb-3 border border-amber-200">
-            <Lock className="w-6 h-6 animate-pulse" />
-          </div>
+          {/* Ikon Gembok ikut bergetar jika gagal */}
+          <motion.div 
+            animate={isShaking ? { rotate: [-10, 10, -10, 10, 0], scale: [1, 1.2, 1] } : {}}
+            transition={{ duration: 0.4 }}
+            className="p-3.5 bg-gradient-to-tr from-amber-500 to-amber-300 rounded-2xl shadow-lg text-amber-950 mb-3 border border-amber-200"
+          >
+            <Lock className="w-6 h-6" />
+          </motion.div>
           <h3 className="font-serif text-xl font-bold text-amber-200 tracking-wide">
             {isRegister ? 'Daftar Akun Diary' : 'Gembok Rahasia Diary'}
           </h3>
@@ -76,9 +91,13 @@ export default function AuthModal({ onClose }) {
 
         <form onSubmit={handleAuth} className="space-y-3.5">
           {error && (
-            <div className="p-2 rounded-lg bg-rose-900/60 border border-rose-500 text-[11px] text-rose-200 text-center font-medium">
-              {error}
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-2 rounded-lg bg-rose-900/80 border border-rose-500 text-[11px] text-rose-100 text-center font-medium shadow-md flex items-center justify-center gap-1.5"
+            >
+              🔒 <span>{error}</span>
+            </motion.div>
           )}
 
           <div>

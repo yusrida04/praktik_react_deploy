@@ -20,6 +20,13 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isBookOpen, setIsBookOpen] = useState(false);
   const [spreadIndex, setSpreadIndex] = useState(0);
+
+  const [isLockShaking, setIsLockShaking] = useState(false);
+
+  const handleTriggerLockShake = () => {
+    setIsLockShaking(true);
+    setTimeout(() => setIsLockShaking(false), 600);
+  };
   
   const [isFlipping, setIsFlipping] = useState(false);
   const [flipDirection, setFlipDirection] = useState(1);
@@ -105,7 +112,12 @@ export default function App() {
       <div className="desk-overlay" />
 
       <AnimatePresence>
-        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+        {showAuthModal && (
+          <AuthModal 
+            onClose={() => setShowAuthModal(false)} 
+            onErrorShake={handleTriggerLockShake} 
+          />
+        )}
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
@@ -157,10 +169,18 @@ export default function App() {
                   </p>
                 </div>
 
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 bg-gradient-to-r from-amber-300 via-amber-200 to-amber-500 border-2 border-amber-600 rounded-l-2xl p-3 shadow-xl flex items-center justify-center gap-2 group-hover:translate-x-0 transition-transform">
+                {/* KUNCI EMAS BERGETAR JIKA GAGAL LOGIN */}
+                <motion.div 
+                  animate={isLockShaking ? {
+                    x: [2, 10, -8, 8, -5, 5, 2],
+                    rotate: [0, -8, 8, -5, 5, 0]
+                  } : {}}
+                  transition={{ duration: 0.5 }}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 bg-gradient-to-r from-amber-300 via-amber-200 to-amber-500 border-2 border-amber-600 rounded-l-2xl p-3 shadow-xl flex items-center justify-center gap-2 group-hover:translate-x-0 transition-transform"
+                >
                   <Lock className="w-5 h-5 text-amber-950" />
                   <div className="w-2 h-6 bg-amber-700/40 rounded-full" />
-                </div>
+                </motion.div>
 
                 <div className="text-center pt-4 border-t border-pink-300/40">
                   <span className="inline-flex items-center gap-2 px-4 py-2 bg-rose-950/40 hover:bg-rose-950/60 text-amber-200 rounded-full text-xs font-bold tracking-wide backdrop-blur-sm transition-colors border border-amber-300/30">
