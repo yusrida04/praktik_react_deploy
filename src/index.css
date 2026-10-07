@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .font-handwriting {
+    font-family: 'Caveat', 'Dancing Script', cursive;
+  }
+  .font-signature {
+    font-family: 'Dancing Script', cursive;
+  }
+  .font-sans-custom {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+/* Custom aesthetic scrollbar for book pages */
+.custom-journal-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-journal-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-journal-scroll::-webkit-scrollbar-thumb {
+  background: rgba(120, 53, 15, 0.25);
+  border-radius: 9999px;
+}
+.custom-journal-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 53, 15, 0.45);
+}
