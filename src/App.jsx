@@ -373,7 +373,7 @@ export default function App() {
 
   // Fake Password/Email Diary Lock Modal States
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authEmail, setAuthEmail] = useState('aulia@diary.com');
+  const [authEmail, setAuthEmail] = useState('yusridajeliantisihite@diary.com');
   const [authPassword, setAuthPassword] = useState('123456');
   const [authError, setAuthError] = useState('');
 
